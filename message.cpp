@@ -1,30 +1,30 @@
 #include "message.hpp"
 
-Message::Message(std::string producerIdentifier, std::string message)
+message::message(std::string producer, std::string msg)
 {
-    this->producerIdentifier = producerIdentifier;
-    this->message = message;
+    this->producer = producer;
+    this->msg = msg;
     this->created_at = std::chrono::system_clock::now();
-    this->hasErr = false;
+    this->has_error = false;
 }
 
-Message::Message(std::string error)
+message::message(std::string error)
 {
-    this->hasErr = true;
+    this->has_error = true;
     this->error = error;
 }
 
-std::string Message::getMessage() 
+std::string message::get_msg() 
 {
-    return this->message;
+    return this->msg;
 }
 
-std::string Message::getProducerIdentifier()
+std::string message::get_producer()
 {
-    return this->producerIdentifier;
+    return this->producer;
 }
 
-std::chrono::system_clock::time_point Message::getCreatedAt()
+std::chrono::system_clock::time_point message::get_created_at()
 {
     return this->created_at;
 }

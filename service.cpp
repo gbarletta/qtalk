@@ -2,11 +2,12 @@
 #include "service.hpp"
 #include "message.hpp"
 
-Service::Service() 
+service::service() 
 {
+
 }
 
-bool Service::registerEntity(std::string identifier, std::string address)
+bool service::register_entity(std::string identifier, std::string address)
 {
     if (this->entities.find(identifier) == this->entities.end()) {
         this->entities[identifier] = address;
@@ -16,60 +17,60 @@ bool Service::registerEntity(std::string identifier, std::string address)
     return false;
 }
 
-bool Service::registerTopic(std::string name)
+bool service::register_topic(std::string name)
 {
     if (this->topics.find(name) == this->topics.end()) {
-        this->topics[name] = std::queue<Message>();
+        this->topics[name] = std::queue<message>();
         return true;
     }
     
     return false;
 }
 
-bool Service::produce(std::string producer, std::string topic, std::string message)
+bool service::produce(std::string producer, std::string topic, std::string msg)
 {
     if (this->entities.find(producer) == this->entities.end() || 
         this->topics.find(topic) == this->topics.end()) {
         return false;
     }
 
-    Message msg = Message(producer, message);
-    this->topics[topic].push(msg);
+    message tmp = message(producer, msg);
+    this->topics[topic].push(tmp);
 
     return true;
 }
         
-Message Service::consume(std::string consumer, std::string topic)
+message service::consume(std::string consumer, std::string topic)
 {
     if (this->entities.find(consumer) == this->entities.end() || 
         this->topics.find(topic) == this->topics.end()) {
-        return Message("couldn't find consumer or topic");
+        return message("couldn't find consumer or topic");
     }
 
     this->topics[topic];
 
     if (!this->topics[topic].empty()) {
-        Message msg = this->topics[topic].front();
+        message msg = this->topics[topic].front();
         this->topics[topic].pop();
         return msg;
     }
 
-    return Message("topic is empty");
+    return message("topic is empty");
 }
 
-void Service::printEntities()
+void service::print_entities()
 {
     for (const auto& [key, value] : this->entities)
         std::cout << "Identifier: " << key << " Address: " << value << std::endl;
 }
 
-void Service::printTopics()
+void service::print_topics()
 {
     for (const auto& [key, value] : this->topics)
         std::cout << "Name: " << key <<  std::endl;
 }
 
-void Service::printTopicMessages(std::string topic)
+void service::print_topic_messages(std::string topic)
 {
     if (this->topics.find(topic) == this->topics.end()) {
         return;
@@ -80,8 +81,8 @@ void Service::printTopicMessages(std::string topic)
 
     while (!tmp.empty())
     {
-        Message msg = tmp.front();
-        std::cout << topic << ": \"" << msg.getMessage() << "\" from: " << msg.getProducerIdentifier() << std::endl;
+        message msg = tmp.front();
+        std::cout << topic << ": \"" << msg.get_msg() << "\" from: " << msg.get_producer() << std::endl;
         tmp.pop();
     } 
 }

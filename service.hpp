@@ -5,20 +5,20 @@
 #include <unordered_map>
 #include <queue>
 
-class Service {
+class service {
     private:
         std::unordered_map<std::string, std::string> entities;
-        std::unordered_map<std::string, std::queue<Message>> topics;
+        std::unordered_map<std::string, std::queue<message>> topics;
 
     public:
-        Service();
-        bool registerEntity(std::string identifier, std::string address);
-        bool registerTopic(std::string name);
-        bool produce(std::string producer, std::string topic, std::string message);
-        Message consume(std::string consumer, std::string topic);
-        void printEntities();
-        void printTopics();
-        void printTopicMessages(std::string topic);
+        service();
+        bool register_entity(std::string identifier, std::string address);
+        bool register_topic(std::string name);
+        bool produce(std::string producer, std::string topic, std::string msg);
+        message consume(std::string consumer, std::string topic);
+        void print_entities();
+        void print_topics();
+        void print_topic_messages(std::string topic);
 };
 
 #endif

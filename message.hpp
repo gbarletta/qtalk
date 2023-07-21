@@ -4,20 +4,20 @@
 #include <string>
 #include <chrono>
 
-class Message {
+class message {
     private:
-        std::string producerIdentifier;
-        std::string message;
+        std::string producer;
+        std::string msg;
         std::chrono::system_clock::time_point created_at;
 
     public:
-        bool hasErr;
+        message(std::string producer, std::string msg);
+        message(std::string error);
+        bool has_error;
         std::string error;
-        Message(std::string producerIdentifier, std::string message);
-        Message(std::string error);
-        std::string getMessage();
-        std::string getProducerIdentifier();
-        std::chrono::system_clock::time_point getCreatedAt();
+        std::string get_msg();
+        std::string get_producer();
+        std::chrono::system_clock::time_point get_created_at();
 };
 
 #endif
