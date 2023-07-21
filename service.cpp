@@ -1,10 +1,12 @@
 #include <iostream>
 #include "service.hpp"
 #include "message.hpp"
+#include "server.hpp"
 
 service::service() 
 {
-
+    server s = server("127.0.0.1", 42069);
+    s.event_loop();
 }
 
 bool service::register_entity(std::string identifier, std::string address)
@@ -76,7 +78,7 @@ void service::print_topic_messages(std::string topic)
         return;
     }
 
-    std::queue tmp = this->topics[topic];
+    auto tmp = this->topics[topic];
     std::cout << "Printing messages from \"" << topic << "\" queue:" << std::endl;
 
     while (!tmp.empty())
