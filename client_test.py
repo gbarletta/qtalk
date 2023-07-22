@@ -16,7 +16,8 @@ def send_message(ip, port, message):
         length_bytes = struct.pack('!H', message_length)
 
         # Send the length bytes followed by the message
-        client_socket.sendall(length_bytes + message.encode())
+        client_socket.sendall(length_bytes)
+        client_socket.sendall(message.encode())
 
         # Close the socket
         client_socket.close()

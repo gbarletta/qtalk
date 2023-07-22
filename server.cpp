@@ -140,7 +140,7 @@ bool server::handle_read(struct epoll_event *event)
         size = ntohs(size);
         std::cout << "packet size: " << size << std::endl;
         buffer = new char[size];
-        recv(fd, &buffer, size, 0);
+        recv(fd, buffer, size, 0);
         std::cout << "Received: " << std::string(buffer) << std::endl; 
     }
 
