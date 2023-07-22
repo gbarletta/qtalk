@@ -1,9 +1,22 @@
 # thanks to GPT :>
 
+import time
+import random
+import string
 import socket
 import struct
 
-def send_message(ip, port, message):
+def random_string():
+    # Choose a random length for the string (between 5 and 15 characters, for example)
+    length = random.randint(10, 100)
+
+    # Generate a random string with uppercase letters, lowercase letters, and digits
+    characters = string.ascii_letters + string.digits
+    random_str = ''.join(random.choices(characters, k=length))
+
+    return random_str
+
+def send_messages(ip, port):
     try:
         # Create a TCP socket
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -11,18 +24,22 @@ def send_message(ip, port, message):
         # Connect to the server
         client_socket.connect((ip, port))
 
-        # Convert the length of the message to a 2-byte value in network order
-        message_length = len(message)
-        length_bytes = struct.pack('!H', message_length)
+        while True:
+            message = "ciaoo"
+            message_length = len(message)
+            print(message)
+            print(message_length)
+            length_bytes = struct.pack('!H', message_length)
 
-        # Send the length bytes followed by the message
-        client_socket.sendall(length_bytes)
-        client_socket.sendall(message.encode())
+            client_socket.sendall(length_bytes)
+            client_socket.sendall("ci".encode())
+            client_socket.sendall("aoo".encode())
 
-        # Close the socket
-        client_socket.close()
+            if client_socket.recv(2).decode() == "ok":
+                time.sleep(1)
+            else:
+                print("weird error")
 
-        print("Message sent successfully.")
     except Exception as e:
         print(f"Error: {e}")
 
@@ -33,8 +50,5 @@ if __name__ == "__main__":
     # Replace 42069 with the actual port number of the server
     port_number = 42069
 
-    # Replace 'Hello, server!' with the message you want to send
-    message_to_send = "Hello, server!"
-
     # Call the function to send the message
-    send_message(ip_address, port_number, message_to_send)
+    send_messages(ip_address, port_number)

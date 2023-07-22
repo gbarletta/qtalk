@@ -19,6 +19,7 @@ class server {
         int listen_descr;
         int epoll_descr;
         struct epoll_event events[1024];
+        unsigned short int lengths[1024];
 
     public:
         server(std::string ip, int port);
@@ -27,6 +28,8 @@ class server {
         bool remove_descriptor(int fd);
         bool handle_accept();
         bool handle_read(struct epoll_event *event);
+        std::string read_request(int fd, unsigned short int size);
+        bool handle_disconnection(int fd);
         bool handle_event(int idx);
         bool event_loop();
         

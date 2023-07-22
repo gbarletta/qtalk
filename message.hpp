@@ -7,8 +7,8 @@
 class message {
     private:
         std::string producer;
-        std::string msg;
         std::chrono::system_clock::time_point created_at;
+        std::string msg;
 
     public:
         message(std::string producer, std::string msg);
@@ -16,8 +16,8 @@ class message {
         bool has_error;
         std::string error;
         std::string get_msg();
-        std::string get_producer();
         std::chrono::system_clock::time_point get_created_at();
+        std::string get_producer();
 };
 
 #endif

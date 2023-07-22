@@ -5,6 +5,10 @@ OBJS := $(patsubst %.cpp, %.o, $(SRCS))
 EXECUTABLE := qtalk
 
 all: $(EXECUTABLE)
+	./$(EXECUTABLE)
+
+debug: $(EXECUTABLE)
+	gdb -ex "run" $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@

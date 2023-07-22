@@ -2,6 +2,8 @@
 
 server::server(std::string ip, int port)
 {
+    std::memset(this->lengths, 0, 1024 * sizeof(unsigned short int));
+
     // classic TCP server setup
     struct sockaddr_in server_addr;
     this->listen_descr = socket(AF_INET, SOCK_STREAM, 0);
@@ -68,8 +70,8 @@ bool server::add_descriptor(int fd, bool read, bool write)
 {
     struct epoll_event ev;
 
-    // edge-triggered epoll
-    ev.events = EPOLLET;
+    // edge-triggered epoll, detect client disconnecting
+    ev.events = EPOLLET | EPOLLRDHUP;
     ev.data.fd = fd;
 
     if (read) {
@@ -127,24 +129,57 @@ bool server::handle_accept()
     return true;
 }
 
+std::string server::read_request(int fd, unsigned short int size)
+{
+    char buffer[4096];
+    int recv_bytes = recv(fd, buffer, size, 0);
+
+    if (recv_bytes == -1) {
+        perror("read_request:");
+        return std::string();
+    }
+
+    if (recv_bytes == size) {
+        std::cout << "buffer size giusta!" << std::endl;
+    }
+
+    std::string request = std::string(buffer);
+    std::cout << "size: " << size << std::endl;
+    std::cout << "request: " << request << std::endl;
+
+    this->lengths[fd] = 0;
+    return request;
+}
+
 bool server::handle_read(struct epoll_event *event)
 {
+    std::cout << "Read, file descriptor: " << event->data.fd << std::endl;
     int fd = event->data.fd;
-    int recv_bytes;
     unsigned short int size;
-    char *buffer;
+    int recv_bytes;
 
-    recv_bytes = recv(fd, &size, 2, 0);
-
-    if (recv_bytes > 0) {
-        size = ntohs(size);
-        std::cout << "packet size: " << size << std::endl;
-        buffer = new char[size];
-        recv(fd, buffer, size, 0);
-        std::cout << "Received: " << std::string(buffer) << std::endl; 
+    if (this->lengths[fd] != 0) {
+        this->read_request(fd, this->lengths[fd]);
+    } else {
+        recv_bytes = recv(fd, &size, 2, 0);
+        
+        if (recv_bytes > 0) {
+            size = ntohs(size);
+            if (this->read_request(fd, size).empty()) {
+                this->lengths[fd] = size;
+            }
+        }   
     }
 
     send(fd, "ok", 2, 0);
+    return true;
+}
+
+bool server::handle_disconnection(int fd)
+{
+    std::cout << "Close, file descriptor: " << fd << std::endl;
+    this->remove_descriptor(fd);
+    close(fd);
     return true;
 }
 
@@ -152,13 +187,27 @@ bool server::handle_event(int idx)
 {
     struct epoll_event *event = &this->events[idx];
 
+    if (event->events & (EPOLLHUP | EPOLLERR)) {
+        std::cout << "error on socket " << event->data.fd << std::endl;
+        this->remove_descriptor(event->data.fd);
+        close(event->data.fd);
+        return false;
+    }
+
+    // accept new clients
     if (event->data.fd == this->listen_descr) {
         return this->handle_accept();
     } 
 
+    // close sockets that are associated with disconnected clients
+    if (event->events & EPOLLRDHUP) {
+        return this->handle_disconnection(event->data.fd);
+    }
+
+    // handle writes from clients
     if (event->events & EPOLLIN) {
         return this->handle_read(event);
-    }
+    } 
 
     return true;
 }
