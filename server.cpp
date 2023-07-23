@@ -2,8 +2,6 @@
 
 server::server(std::string ip, int port)
 {
-    std::memset(this->lengths, 0, 1024 * sizeof(unsigned short int));
-
     // classic TCP server setup
     struct sockaddr_in server_addr;
     this->listen_descr = socket(AF_INET, SOCK_STREAM, 0);
@@ -129,55 +127,97 @@ bool server::handle_accept()
     return true;
 }
 
-std::string server::read_request(int fd, unsigned short int size)
+// START: 0x02
+// END: 0x03
+// SEPARATOR: 0x1c
+
+#define READ_SIZE 1
+
+#define REQ_START 0x02
+#define REQ_END   0x03
+#define REQ_SEP   0x1c
+
+std::vector<std::string> split_string(const std::string& input, char delimiter) {
+    std::vector<std::string> result;
+
+    auto start = input.begin();
+    auto end = input.begin();
+
+    while (end != input.end()) {
+        end = std::find(start, input.end(), delimiter);
+        result.emplace_back(start, end);
+
+        if (end != input.end()) {
+            start = std::next(end);
+        }
+    }
+
+    return result;
+}
+
+bool server::process_request(int fd)
 {
-    char buffer[4096];
-    int recv_bytes = recv(fd, buffer, size, 0);
+    size_t pos = 0;
+    std::vector<std::string> parts;
+    std::string request(this->buffers[fd].begin(), this->buffers[fd].end());
 
-    if (recv_bytes == -1) {
-        perror("read_request:");
-        return std::string();
+    if (request[0] != REQ_START) {
+        return false;
+    }
+    
+    parts = split_string(request, 0x1c);
+
+    for (size_t i = 0; i < parts.size(); i++) {
+        std::cout << "part " << i << ": " << parts[i] << std::endl;
     }
 
-    if (recv_bytes == size) {
-        std::cout << "buffer size giusta!" << std::endl;
+    this->buffers[fd].clear();
+    return true;
+}
+
+int server::read(int fd)
+{
+    int recv_bytes;
+    unsigned char buffer[READ_SIZE];
+
+    std::memset(buffer, 0, READ_SIZE);
+
+    while ((recv_bytes = recv(fd, buffer, READ_SIZE, 0)) > 0) {
+        for (int i = 0; i < READ_SIZE; i++) {
+            if (this->buffers[fd].size() == 0 && buffer[i] == 0x01) {
+                continue;
+            }
+
+            if (buffer[i] == REQ_END) {
+                if (this->process_request(fd)) {
+                    return 1;
+                }
+            }
+
+            this->buffers[fd].push_back(buffer[i]);
+        }
+        
+        std::memset(buffer, 0, READ_SIZE);
     }
 
-    std::string request = std::string(buffer);
-    std::cout << "size: " << size << std::endl;
-    std::cout << "request: " << request << std::endl;
-
-    this->lengths[fd] = 0;
-    return request;
+    return recv_bytes;
 }
 
 bool server::handle_read(struct epoll_event *event)
 {
-    std::cout << "Read, file descriptor: " << event->data.fd << std::endl;
     int fd = event->data.fd;
-    unsigned short int size;
-    int recv_bytes;
-
-    if (this->lengths[fd] != 0) {
-        this->read_request(fd, this->lengths[fd]);
-    } else {
-        recv_bytes = recv(fd, &size, 2, 0);
-        
-        if (recv_bytes > 0) {
-            size = ntohs(size);
-            if (this->read_request(fd, size).empty()) {
-                this->lengths[fd] = size;
-            }
-        }   
+    int status = this->read(fd);
+    
+    if (status == -1) {
+        perror("handle_read");
+        return false;
     }
 
-    send(fd, "ok", 2, 0);
     return true;
 }
 
 bool server::handle_disconnection(int fd)
 {
-    std::cout << "Close, file descriptor: " << fd << std::endl;
     this->remove_descriptor(fd);
     close(fd);
     return true;

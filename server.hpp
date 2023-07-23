@@ -13,13 +13,15 @@
 #include <csignal>
 #include <iostream>
 #include <string>
+#include <vector>
+#include <algorithm>
 
 class server {
     private:
         int listen_descr;
         int epoll_descr;
         struct epoll_event events[1024];
-        unsigned short int lengths[1024];
+        std::vector<unsigned char> buffers[1024];
 
     public:
         server(std::string ip, int port);
@@ -27,6 +29,8 @@ class server {
         bool add_descriptor(int fd, bool read, bool write);
         bool remove_descriptor(int fd);
         bool handle_accept();
+        int read(int fd);
+        bool process_request(int fd);
         bool handle_read(struct epoll_event *event);
         std::string read_request(int fd, unsigned short int size);
         bool handle_disconnection(int fd);
