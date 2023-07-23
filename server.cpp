@@ -165,7 +165,7 @@ bool server::process_request(int fd)
         return false;
     }
     
-    parts = split_string(request, 0x1c);
+    parts = split_string(request, REQ_SEP);
 
     for (size_t i = 0; i < parts.size(); i++) {
         std::cout << "part " << i << ": " << parts[i] << std::endl;
@@ -184,7 +184,7 @@ int server::read(int fd)
 
     while ((recv_bytes = recv(fd, buffer, READ_SIZE, 0)) > 0) {
         for (int i = 0; i < READ_SIZE; i++) {
-            if (this->buffers[fd].size() == 0 && buffer[i] == 0x01) {
+            if (this->buffers[fd].size() == 0 && buffer[i] == REQ_END) {
                 continue;
             }
 
